@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
     <link rel="stylesheet" href="<?= base_url('assets/plugins/fontawesome-free/css/all.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/dist/css/adminlte.min.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/dist/css/adminlte.min.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/plugins/datatables-responsive/css/responsive.bootstrap4.min.css') ?>">
 </head>
 
 <body class="hold-transition sidebar-mini">
@@ -135,29 +138,38 @@
     <script src="<?= base_url('assets/plugins/jquery/jquery.min.js') ?>"></script>
     <script src="<?= base_url('assets/plugins/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
     <script src="<?= base_url('assets/dist/js/adminlte.min.js') ?>"></script>
+    <script src="<?= base_url('assets/dist/js/adminlte.min.js') ?>"></script>
+
+    <script src="<?= base_url('assets/plugins/datatables/jquery.dataTables.min.js') ?>"></script>
+    <script src="<?= base_url('assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') ?>"></script>
+    <script src="<?= base_url('assets/plugins/datatables-responsive/js/dataTables.responsive.min.js') ?>"></script>
+    <script src="<?= base_url('assets/plugins/datatables-responsive/js/responsive.bootstrap4.min.js') ?>"></script>
 
     <?= $this->renderSection('page_scripts') ?>
+</body>
 
-    <script>
-        <?php if (session()->getFlashdata('success')) : ?>
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: "<?= session()->getFlashdata('success') ?>",
-                timer: 2500,
-                showConfirmButton: false
-            });
-        <?php endif; ?>
-        <?php if (session()->getFlashdata('error')) : ?>
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal!',
-                text: "<?= session()->getFlashdata('error') ?>",
-                timer: 3000,
-                showConfirmButton: false
-            });
-        <?php endif; ?>
-    </script>
+<?= $this->renderSection('page_scripts') ?>
+
+<script>
+    <?php if (session()->getFlashdata('success')) : ?>
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: "<?= session()->getFlashdata('success') ?>",
+            timer: 2500,
+            showConfirmButton: false
+        });
+    <?php endif; ?>
+    <?php if (session()->getFlashdata('error')) : ?>
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: "<?= session()->getFlashdata('error') ?>",
+            timer: 3000,
+            showConfirmButton: false
+        });
+    <?php endif; ?>
+</script>
 </body>
 
 </html>

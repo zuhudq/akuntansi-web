@@ -19,13 +19,13 @@ Daftar Akun (Chart of Accounts)
         </div>
     </div>
     <div class="card-body">
-        <table id="coa_table" class="table table-bordered table-striped">
+        <table id="data-table" class="table table-bordered table-striped">
             <thead>
                 <tr>
                     <th>Kode Akun</th>
                     <th>Nama Akun</th>
                     <th>Kategori</th>
-                    <th>Saldo Awal</th>
+                    <th class="text-right">Saldo Awal</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -50,12 +50,12 @@ Daftar Akun (Chart of Accounts)
 
 <?= $this->section('page_scripts') ?>
 <script>
+    // Fungsi ini akan dijalankan setelah seluruh halaman siap
     $(function() {
-        // Cari semua tombol dengan class '.btn-delete'
+
+        // --- Logika untuk Tombol Hapus ---
         $('.btn-delete').on('click', function(e) {
-            // Hentikan aksi default dari link (agar tidak langsung redirect)
             e.preventDefault();
-            // Ambil URL hapus dari atribut href
             const href = $(this).attr('href');
 
             Swal.fire({
@@ -69,11 +69,21 @@ Daftar Akun (Chart of Accounts)
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Arahkan browser ke URL hapus
                     document.location.href = href;
                 }
             });
         });
+
+        // --- PERBAIKAN: Logika untuk Mengaktifkan DataTables ---
+        // Kode ini sekarang diletakkan di sini, BUKAN di dalam fungsi tombol hapus
+        $("#data-table").DataTable({
+            "responsive": true,
+            "lengthChange": false,
+            "autoWidth": false,
+            "ordering": true, // Mengaktifkan sorting
+            "info": true, // Menampilkan info halaman
+        });
+
     });
 </script>
 <?= $this->endSection() ?>

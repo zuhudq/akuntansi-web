@@ -19,7 +19,7 @@ Daftar Jurnal Umum
         </div>
     </div>
     <div class="card-body">
-        <table class="table table-bordered table-striped">
+        <table id="data-table" class="table table-bordered table-striped">
             <thead>
                 <tr>
                     <th style="width: 10px">#</th>
@@ -29,20 +29,25 @@ Daftar Jurnal Umum
                 </tr>
             </thead>
             <tbody>
-                <?php $no = 1;
-                foreach ($journals as $journal) : ?>
+                <?php if (empty($journals)): ?>
                     <tr>
-                        <td><?= $no++ ?>.</td>
-                        <td><?= date('d M Y', strtotime($journal['tanggal_jurnal'])) ?></td>
-                        <td><?= esc($journal['deskripsi']) ?></td>
-                        <td>
-                            <a href="/jurnal/detail/<?= $journal['id_jurnal'] ?>" class="btn btn-sm btn-success">Detail</a>
-                            <a href="/jurnal/edit/<?= $journal['id_jurnal'] ?>" class="btn btn-sm btn-info">Edit</a>
-
-                            <a href="/jurnal/delete/<?= $journal['id_jurnal'] ?>" class="btn btn-sm btn-danger btn-delete">Hapus</a>
-                        </td>
+                        <td colspan="4" class="text-center">Belum ada data jurnal.</td>
                     </tr>
-                <?php endforeach; ?>
+                <?php else: ?>
+                    <?php $no = 1;
+                    foreach ($journals as $journal) : ?>
+                        <tr>
+                            <td><?= $no++ ?>.</td>
+                            <td><?= date('d M Y', strtotime($journal['tanggal_jurnal'])) ?></td>
+                            <td><?= esc($journal['deskripsi']) ?></td>
+                            <td>
+                                <a href="/jurnal/detail/<?= $journal['id_jurnal'] ?>" class="btn btn-sm btn-success">Detail</a>
+                                <a href="/jurnal/edit/<?= $journal['id_jurnal'] ?>" class="btn btn-sm btn-info">Edit</a>
+                                <a href="/jurnal/delete/<?= $journal['id_jurnal'] ?>" class="btn btn-sm btn-danger btn-delete">Hapus</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
@@ -51,16 +56,12 @@ Daftar Jurnal Umum
 
 <?= $this->section('page_scripts') ?>
 <script>
-    // Saat dokumen sudah siap
     $(function() {
-        // Cari semua tombol dengan class '.btn-delete'
+        // --- Logika untuk Tombol Hapus (TETAP SAMA) ---
         $('.btn-delete').on('click', function(e) {
-            // Hentikan aksi default dari link (agar tidak langsung redirect)
             e.preventDefault();
-            // Ambil URL hapus dari atribut href
             const href = $(this).attr('href');
 
-            // Tampilkan popup SweetAlert2
             Swal.fire({
                 title: 'Apakah Anda Yakin?',
                 text: "Jurnal yang dihapus akan mempengaruhi laporan keuangan!",
@@ -71,12 +72,22 @@ Daftar Jurnal Umum
                 confirmButtonText: 'Ya, Hapus Saja!',
                 cancelButtonText: 'Batal'
             }).then((result) => {
-                // Jika user menekan tombol "Ya, Hapus Saja!"
                 if (result.isConfirmed) {
-                    // Arahkan browser ke URL hapus
                     document.location.href = href;
                 }
             });
+        });
+
+        // --- PERUBAHAN 2: TAMBAHKAN KODE INI ---
+        $("#data-table").DataTable({
+            "responsive": true,
+            "lengthChange": false,
+            "autoWidth": false,
+            "ordering": true,
+            "info": true,
+            "order": [
+                [0, "desc"]
+            ] // Mengurutkan berdasarkan kolom pertama (No.) secara descending
         });
     });
 </script>
