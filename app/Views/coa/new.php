@@ -44,6 +44,11 @@ Form Tambah Akun Baru
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label for="saldo_awal">Saldo Awal</label>
+                        <input type="number" step="0.01" class="form-control" name="saldo_awal" placeholder="Contoh: 5000000.00" value="0.00">
+                        <small class="form-text text-muted">Masukkan saldo awal untuk akun ini. Biarkan 0 jika tidak ada.</small>
+                    </div>
                     <div class="mt-4">
                         <button type="submit" class="btn btn-success">Simpan</button>
                         <a href="/coa" class="btn btn-light">Batal</a>

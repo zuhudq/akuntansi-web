@@ -12,7 +12,7 @@ class CoaModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['kode_akun', 'nama_akun', 'posisi_saldo', 'kategori_akun'];
+    protected $allowedFields    = ['kode_akun', 'nama_akun', 'posisi_saldo', 'kategori_akun', 'saldo_awal'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

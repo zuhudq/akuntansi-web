@@ -44,6 +44,10 @@ Form Edit Akun: <?= esc($account['nama_akun']) ?>
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label for="saldo_awal">Saldo Awal</label>
+                        <input type="number" step="0.01" class="form-control" name="saldo_awal" value="<?= esc($account['saldo_awal']) ?>">
+                    </div>
                     <div class="mt-4">
                         <button type="submit" class="btn btn-success">Simpan Perubahan</button>
                         <a href="/coa" class="btn btn-light">Batal</a>

@@ -18,15 +18,38 @@
         </div>
         <div class="card">
             <div class="card-body login-card-body">
-
                 <?= $this->renderSection('content') ?>
-
             </div>
         </div>
     </div>
+
     <script src="<?= base_url('assets/plugins/jquery/jquery.min.js') ?>"></script>
     <script src="<?= base_url('assets/plugins/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
     <script src="<?= base_url('assets/dist/js/adminlte.min.js') ?>"></script>
+
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        <?php if (session()->getFlashdata('success')) : ?>
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: '<?= session()->getFlashdata('success') ?>',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('error')) : ?>
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal!',
+                text: '<?= session()->getFlashdata('error') ?>',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        <?php endif; ?>
+    </script>
+
 </body>
 
 </html>

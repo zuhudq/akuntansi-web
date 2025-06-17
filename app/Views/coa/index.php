@@ -25,6 +25,7 @@ Daftar Akun (Chart of Accounts)
                     <th>Kode Akun</th>
                     <th>Nama Akun</th>
                     <th>Kategori</th>
+                    <th>Saldo Awal</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -34,6 +35,7 @@ Daftar Akun (Chart of Accounts)
                         <td><?= esc($account['kode_akun']) ?></td>
                         <td><?= esc($account['nama_akun']) ?></td>
                         <td><?= esc($account['kategori_akun']) ?></td>
+                        <td class="text-right"><?= number_format($account['saldo_awal'], 2, ',', '.') ?></td>
                         <td>
                             <a href="/coa/edit/<?= $account['id_akun'] ?>" class="btn btn-sm btn-info">Edit</a>
                             <a href="/coa/delete/<?= $account['id_akun'] ?>" class="btn btn-sm btn-danger btn-delete">Hapus</a>

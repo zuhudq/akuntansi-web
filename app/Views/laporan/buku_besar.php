@@ -32,11 +32,10 @@ Laporan Buku Besar
                 <div class="col-md-2">
                     <div class="form-group">
                         <label>&nbsp;</label>
-                        <button type="submit" class="btn btn-primary btn-block">Tampilkan Laporan</button>
+                        <button type="submit" class="btn btn-primary btn-block">Tampilkan</button>
                     </div>
                 </div>
-
-                <?php if (isset($reportData) && !empty($reportData)) : ?>
+                <?php if (!empty($reportData) || (isset($selectedAccount) && $selectedAccount['saldo_awal'] != 0)) : ?>
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
@@ -51,7 +50,7 @@ Laporan Buku Besar
     </div>
 </div>
 
-<?php if (isset($reportData) && !empty($reportData)) : ?>
+<?php if (isset($selectedAccount)) : ?>
     <div class="card">
         <div class="card-header">
             <h4 class="card-title">
@@ -71,23 +70,25 @@ Laporan Buku Besar
                 </thead>
                 <tbody>
                     <?php
-                    $saldo = 0; // Inisialisasi saldo awal
+                    // PERUBAHAN DI SINI: Saldo tidak lagi dimulai dari 0
+                    $saldo = $selectedAccount['posisi_saldo'] == 'debit' ? $selectedAccount['saldo_awal'] : ($selectedAccount['saldo_awal'] * -1);
                     ?>
+                    <tr>
+                        <td colspan="4"><strong>Saldo Awal</strong></td>
+                        <td class="text-right"><strong>Rp <?= number_format($saldo, 2, ',', '.') ?></strong></td>
+                    </tr>
+
                     <?php foreach ($reportData as $row) : ?>
                         <?php
-                        // Logika untuk menghitung saldo berjalan
-                        if ($selectedAccount['posisi_saldo'] == 'debit') {
-                            $saldo += $row['debit'] - $row['kredit'];
-                        } else { // posisi_saldo == 'kredit'
-                            $saldo += $row['kredit'] - $row['debit'];
-                        }
+                        // Logika perhitungan saldo berjalan sekarang sudah benar karena dimulai dari saldo awal
+                        $saldo += $row['debit'] - $row['kredit'];
                         ?>
                         <tr>
                             <td><?= date('d M Y', strtotime($row['tanggal_jurnal'])) ?></td>
                             <td><?= esc($row['deskripsi']) ?></td>
                             <td class="text-right">Rp <?= number_format($row['debit'], 2, ',', '.') ?></td>
                             <td class="text-right">Rp <?= number_format($row['kredit'], 2, ',', '.') ?></td>
-                            <td class="text-right">Rp <?= number_format($saldo, 2, ',', '.') ?></td>
+                            <td class="text-right">Rp <?= number_format($selectedAccount['posisi_saldo'] == 'debit' ? $saldo : ($saldo * -1), 2, ',', '.') ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

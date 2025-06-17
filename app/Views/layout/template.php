@@ -5,7 +5,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Projek Akuntansi | <?= $this->renderSection('title') ?></title>
-
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
     <link rel="stylesheet" href="<?= base_url('assets/plugins/fontawesome-free/css/all.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/dist/css/adminlte.min.css') ?>">
@@ -27,11 +26,10 @@
                 <img src="<?= base_url('assets/dist/img/AdminLTELogo.png') ?>" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
                 <span class="brand-text font-weight-light">Akuntansi Web</span>
             </a>
-
             <div class="sidebar">
                 <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                     <div class="image">
-                        <img src="<?= base_url('assets/dist/img/user2-160x160.jpg') ?>" class="img-circle elevation-2" alt="User Image">
+                        <img src="<?= base_url('uploads/avatars/' . (session()->get('avatar') ?? 'default_avatar.png')) ?>" class="img-circle elevation-2" alt="User Image">
                     </div>
                     <div class="info">
                         <a href="/profile" class="d-block"><?= session()->get('nama_lengkap') ?? 'Nama Pengguna' ?></a>
@@ -53,6 +51,13 @@
                                 <a href="/coa" class="nav-link">
                                     <i class="nav-icon fas fa-book"></i>
                                     <p>Chart of Accounts</p>
+                                </a>
+                            </li>
+                            <li class="nav-header">ADMIN AREA</li>
+                            <li class="nav-item">
+                                <a href="/admin/pending-approvals" class="nav-link">
+                                    <i class="nav-icon fas fa-user-check"></i>
+                                    <p>Persetujuan Pengguna</p>
                                 </a>
                             </li>
                         <?php endif; ?>
@@ -101,7 +106,7 @@
         </aside>
 
         <div class="content-wrapper">
-            <div class="content-header">
+            <section class="content-header">
                 <div class="container-fluid">
                     <div class="row mb-2">
                         <div class="col-sm-6">
@@ -109,8 +114,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
+            </section>
             <section class="content">
                 <div class="container-fluid">
                     <?= $this->renderSection('content') ?>
@@ -139,17 +143,16 @@
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil!',
-                text: '<?= session()->getFlashdata('success') ?>',
+                text: "<?= session()->getFlashdata('success') ?>",
                 timer: 2500,
                 showConfirmButton: false
             });
         <?php endif; ?>
-
         <?php if (session()->getFlashdata('error')) : ?>
             Swal.fire({
                 icon: 'error',
                 title: 'Gagal!',
-                text: '<?= session()->getFlashdata('error') ?>',
+                text: "<?= session()->getFlashdata('error') ?>",
                 timer: 3000,
                 showConfirmButton: false
             });

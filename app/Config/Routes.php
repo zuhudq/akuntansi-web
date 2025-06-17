@@ -14,6 +14,8 @@ $routes->post('/login', 'Auth::attemptLogin');
 $routes->get('/register', 'Auth::register');
 $routes->post('/register', 'Auth::processRegister');
 $routes->get('/logout', 'Auth::logout');
+$routes->get('/verify-email', 'Auth::verifyEmail');
+
 
 
 //====================================================================
@@ -23,7 +25,7 @@ $routes->get('/logout', 'Auth::logout');
 // GRUP 1: Rute untuk SEMUA user yang sudah login (Admin, Supervisor, User)
 //====================================================================
 $routes->group('', ['filter' => 'auth'], function ($routes) {
-
+    $routes->post('profile/delete', 'Profile::deleteAccount');
     // Rute halaman utama setelah login
     $routes->get('/', 'Dashboard::index');
 
@@ -54,8 +56,12 @@ $routes->group('', ['filter' => ['auth', 'role:admin']], function ($routes) {
     $routes->get('coa/edit/(:num)', 'Coa::edit/$1');
     $routes->post('coa/update/(:num)', 'Coa::update/$1');
     $routes->get('coa/delete/(:num)', 'Coa::delete/$1');
-});
 
+    // --- Rute untuk Admin Area (BARU) ---
+    $routes->get('admin/pending-approvals', 'Admin::pendingApprovals');
+    $routes->get('admin/approve/(:num)', 'Admin::approve/$1');
+    $routes->get('admin/reject/(:num)', 'Admin::reject/$1');
+});
 
 // GRUP 3: Rute hanya untuk ADMIN dan SUPERVISOR
 //====================================================================
@@ -66,4 +72,6 @@ $routes->group('', ['filter' => ['auth', 'role:admin,supervisor']], function ($r
     $routes->get('laporan/laba-rugi', 'Laporan::labaRugi');
     $routes->get('laporan/neraca', 'Laporan::neraca');
     $routes->get('laporan/cetak-buku-besar', 'Laporan::cetakBukuBesar');
+    $routes->get('laporan/cetak-laba-rugi', 'Laporan::cetakLabaRugi');
+    $routes->get('laporan/cetak-neraca', 'Laporan::cetakNeraca');
 });

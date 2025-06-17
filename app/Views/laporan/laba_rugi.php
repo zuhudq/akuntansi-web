@@ -34,6 +34,17 @@ Laporan Laba Rugi
                         <button type="submit" class="btn btn-primary btn-block">Tampilkan Laporan</button>
                     </div>
                 </div>
+
+                <?php if ($isFiltered) : ?>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <a href="/laporan/cetak-laba-rugi?start_date=<?= $startDate ?>&end_date=<?= $endDate ?>" class="btn btn-danger btn-block" target="_blank">
+                                <i class="fas fa-file-pdf"></i> Cetak PDF
+                            </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </form>
     </div>
@@ -77,7 +88,7 @@ Laporan Laba Rugi
                     <?php endforeach; ?>
                     <tr>
                         <th style="padding-left: 30px;">Total Beban</th>
-                        <th class="text-right">Rp <?= number_format($totalBeban, 2, ',', '.') ?></th>
+                        <th class="text-right">(Rp <?= number_format($totalBeban, 2, ',', '.') ?>)</th>
                     </tr>
 
                     <tr>

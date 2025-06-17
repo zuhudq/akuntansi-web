@@ -28,6 +28,17 @@ Laporan Neraca
                         <button type="submit" class="btn btn-primary btn-block">Tampilkan Laporan</button>
                     </div>
                 </div>
+
+                <?php if ($isFiltered) : ?>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <a href="/laporan/cetak-neraca?end_date=<?= $endDate ?>" class="btn btn-danger btn-block" target="_blank">
+                                <i class="fas fa-file-pdf"></i> Cetak PDF
+                            </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </form>
     </div>
