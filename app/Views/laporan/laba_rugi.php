@@ -30,24 +30,27 @@ Laporan Laba Rugi
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
-                        <label>&nbsp;</label>
-                        <button type="submit" class="btn btn-primary btn-block">Tampilkan Laporan</button>
+                        <button type="submit" class="btn btn-primary btn-block">Terapkan</button>
                     </div>
                 </div>
-
                 <?php if ($isFiltered) : ?>
                     <div class="col-md-2">
                         <div class="form-group">
-                            <label>&nbsp;</label>
-                            <a href="/laporan/cetak-laba-rugi?start_date=<?= $startDate ?>&end_date=<?= $endDate ?>" class="btn btn-danger btn-block" target="_blank">
-                                <i class="fas fa-file-pdf"></i> Cetak PDF
+                            <a href="/laporan/cetak-laba-rugi?..." class="btn btn-danger btn-block"><i class="fas fa-file-pdf"></i> Cetak PDF</a>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <a href="/laporan/export-laba-rugi?start_date=<?= $startDate ?>&end_date=<?= $endDate ?>" class="btn btn-success btn-block">
+                                <i class="fas fa-file-excel"></i> Export Excel
                             </a>
                         </div>
                     </div>
                 <?php endif; ?>
             </div>
-        </form>
     </div>
+    </form>
+</div>
 </div>
 
 <?php if ($isFiltered) : ?>

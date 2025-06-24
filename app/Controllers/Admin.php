@@ -25,7 +25,6 @@ class Admin extends BaseController
     /**
      * Menyetujui pendaftaran seorang pengguna berdasarkan ID.
      */
-    // Ganti seluruh isi fungsi approve() dengan ini:
     public function approve($id)
     {
         $userModel = new \App\Models\UserModel();

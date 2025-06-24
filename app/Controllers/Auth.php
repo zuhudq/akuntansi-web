@@ -89,33 +89,28 @@ class Auth extends BaseController
         $email = $this->request->getVar('email');
         $password = $this->request->getVar('password');
 
-        $userModel = new UserModel();
+        $userModel = new \App\Models\UserModel();
         $user = $userModel->where('email', $email)->first();
 
+        // Pengecekan 1: User ada & Password cocok
         if (!$user || !password_verify($password, $user['password_hash'])) {
             return redirect()->to('/login')->with('error', 'Email atau Password salah.');
         }
 
-        // =======================================================
-        //     INI BAGIAN YANG KITA MODIFIKASI
-        // =======================================================
-        // Pengecekan baru: jika statusnya 'ditolak'
-        if ($user['status'] == 'rejected') {
-            return redirect()->to('/login')->with('error', 'Pendaftaran Anda telah ditolak oleh admin.');
-        }
-
-        // Pengecekan lama: jika statusnya bukan 'active'
+        // Pengecekan 2: Status harus 'active'
         if ($user['status'] != 'active') {
-            $errorMessage = ($user['status'] == 'pending_verification')
-                ? 'Akun Anda belum aktif. Silakan cek email untuk verifikasi.'
-                : 'Akun Anda sedang menunggu persetujuan dari Admin.';
+            $errorMessage = 'Akun Anda belum aktif atau sedang diproses.';
+            if ($user['status'] == 'pending_verification') {
+                $errorMessage = 'Akun Anda belum aktif. Silakan cek email untuk verifikasi.';
+            } elseif ($user['status'] == 'pending_approval') {
+                $errorMessage = 'Akun Anda sedang menunggu persetujuan dari Admin.';
+            } elseif ($user['status'] == 'rejected') {
+                $errorMessage = 'Pendaftaran Anda telah ditolak oleh admin.';
+            }
             return redirect()->to('/login')->with('error', $errorMessage);
         }
-        // =======================================================
-        //     AKHIR DARI MODIFIKASI
-        // =======================================================
 
-
+        // Jika semua pengecekan lolos, buat sesi
         $session = session();
         $sessionData = [
             'user_id'      => $user['id'],
@@ -126,6 +121,14 @@ class Auth extends BaseController
         ];
         $session->set($sessionData);
 
+
+        // Cek role setelah sesi dibuat, lalu arahkan ke dashboard yang sesuai
+        if ($user['role'] === 'pemimpin') {
+            // Jika rolenya pemimpin, arahkan ke dashboard eksekutif
+            return redirect()->to('/pemimpin/dashboard');
+        }
+
+        // Jika bukan pemimpin, arahkan ke dashboard utama
         return redirect()->to('/')->with('success', 'Login berhasil! Selamat datang kembali.');
     }
 

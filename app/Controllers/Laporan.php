@@ -6,6 +6,8 @@ use App\Controllers\BaseController;
 use App\Models\CoaModel;
 use App\Models\JurnalDetailModel;
 use Dompdf\Dompdf;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class Laporan extends BaseController
 {
@@ -411,5 +413,121 @@ class Laporan extends BaseController
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
         $dompdf->stream("Laporan_Neraca_" . date('d-m-Y') . ".pdf", ["Attachment" => 0]);
+    }
+
+    // Di dalam class Laporan, setelah fungsi cetakNeraca()
+
+    public function exportLabaRugiExcel()
+    {
+        // =======================================================
+        //     BAGIAN YANG SEBELUMNYA HILANG, SEKARANG DILENGKAPI
+        // =======================================================
+        $startDate = $this->request->getGet('start_date') ?? date('Y-m-01');
+        $endDate = $this->request->getGet('end_date') ?? date('Y-m-t');
+        $coaModel = new \App\Models\CoaModel();
+        $detailModel = new \App\Models\JurnalDetailModel();
+
+        $getLabaRugiBalance = function ($accountId, $startDate, $endDate) use ($detailModel) {
+            if (empty($startDate) || empty($endDate)) return 0;
+            $builder = $detailModel->builder();
+            $builder->select('SUM(debit) as total_debit, SUM(kredit) as total_kredit');
+            $builder->join('jurnal_header', 'jurnal_header.id_jurnal = jurnal_detail.id_jurnal');
+            $builder->where('jurnal_detail.id_akun', $accountId);
+            $builder->where('jurnal_header.tanggal_jurnal >=', $startDate);
+            $builder->where('jurnal_header.tanggal_jurnal <=', $endDate);
+            $result = $builder->get()->getRow();
+            return ($result->total_debit ?? 0) - ($result->total_kredit ?? 0);
+        };
+
+        $pendapatanAccounts = $coaModel->where('kategori_akun', 'Pendapatan')->findAll();
+        $totalPendapatan = 0;
+        $pendapatanDetails = [];
+        foreach ($pendapatanAccounts as $account) {
+            $balance = $getLabaRugiBalance($account['id_akun'], $startDate, $endDate) * -1;
+            if ($balance != 0) {
+                $pendapatanDetails[] = ['nama_akun' => $account['nama_akun'], 'balance' => $balance];
+                $totalPendapatan += $balance;
+            }
+        }
+
+        $bebanAccounts = $coaModel->where('kategori_akun', 'Beban')->findAll();
+        $totalBeban = 0;
+        $bebanDetails = [];
+        foreach ($bebanAccounts as $account) {
+            $balance = $getLabaRugiBalance($account['id_akun'], $startDate, $endDate);
+            if ($balance != 0) {
+                $bebanDetails[] = ['nama_akun' => $account['nama_akun'], 'balance' => $balance];
+                $totalBeban += $balance;
+            }
+        }
+        $labaRugiPeriode = $totalPendapatan - $totalBeban;
+
+        // =======================================================
+        //     LOGIKA MENULIS KE EXCEL (TIDAK BERUBAH)
+        // =======================================================
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Menulis Header Laporan
+        $sheet->setCellValue('A1', 'Laporan Laba Rugi');
+        $sheet->mergeCells('A1:B1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        $sheet->setCellValue('A2', 'Periode: ' . date('d M Y', strtotime($startDate)) . ' s/d ' . date('d M Y', strtotime($endDate)));
+        $sheet->mergeCells('A2:B2');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Menulis Judul Kolom
+        $sheet->setCellValue('A4', 'Keterangan');
+        $sheet->setCellValue('B4', 'Jumlah');
+        $sheet->getStyle('A4:B4')->getFont()->setBold(true);
+        $sheet->getStyle('A4:B4')->getBorders()->getBottom()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+        // Menulis Data
+        $row = 5;
+        $sheet->setCellValue('A' . $row, 'Pendapatan')->getStyle('A' . $row)->getFont()->setBold(true);
+        $row++;
+        foreach ($pendapatanDetails as $item) {
+            $sheet->setCellValue('A' . $row, $item['nama_akun'])->getStyle('A' . $row)->getAlignment()->setIndent(1);
+            $sheet->setCellValue('B' . $row, $item['balance']);
+            $row++;
+        }
+        $sheet->setCellValue('A' . $row, 'Total Pendapatan')->getStyle('A' . $row)->getFont()->setBold(true);
+        $sheet->setCellValue('B' . $row, $totalPendapatan)->getStyle('B' . $row)->getFont()->setBold(true);
+        $sheet->getStyle('B' . $row)->getBorders()->getTop()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $row++;
+        $row++;
+
+        $sheet->setCellValue('A' . $row, 'Beban Operasional')->getStyle('A' . $row)->getFont()->setBold(true);
+        $row++;
+        foreach ($bebanDetails as $item) {
+            $sheet->setCellValue('A' . $row, $item['nama_akun'])->getStyle('A' . $row)->getAlignment()->setIndent(1);
+            $sheet->setCellValue('B' . $row, $item['balance']);
+            $row++;
+        }
+        $sheet->setCellValue('A' . $row, 'Total Beban')->getStyle('A' . $row)->getFont()->setBold(true);
+        $sheet->setCellValue('B' . $row, $totalBeban)->getStyle('B' . $row)->getFont()->setBold(true);
+        $sheet->getStyle('B' . $row)->getBorders()->getTop()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $row++;
+        $row++;
+
+        $sheet->setCellValue('A' . $row, 'LABA / (RUGI) BERSIH')->getStyle('A' . $row, 'B' . $row)->getFont()->setBold(true);
+        $sheet->setCellValue('B' . $row, $labaRugiPeriode)->getStyle('B' . $row)->getFont()->setBold(true);
+        $sheet->getStyle('A' . $row . ':B' . $row)->getBorders()->getTop()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THICK);
+        $sheet->getStyle('A' . $row . ':B' . $row)->getBorders()->getBottom()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THICK);
+
+        // Mengatur format angka dan lebar kolom
+        $sheet->getStyle('B5:B' . $row)->getNumberFormat()->setFormatCode('_("Rp"* #,##0.00_);_("Rp"* \(#,##0.00\);_("Rp"* "-"??_);_(@_)');
+        $sheet->getColumnDimension('A')->setAutoSize(true);
+        $sheet->getColumnDimension('B')->setAutoSize(true);
+
+        // Proses download
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $fileName = 'Laporan_Laba_Rugi_' . date('Y-m-d') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
+        $writer->save('php://output');
+        exit();
     }
 }

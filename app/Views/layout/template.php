@@ -63,6 +63,12 @@
                                     <p>Persetujuan Pengguna</p>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a href="/admin/users" class="nav-link">
+                                    <i class="nav-icon fas fa-users-cog"></i>
+                                    <p>Manajemen Pengguna</p>
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <li class="nav-header">TRANSAKSI</li>
                         <li class="nav-item">
