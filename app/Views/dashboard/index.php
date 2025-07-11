@@ -234,7 +234,7 @@ Dashboard
             scales: {
                 yAxes: [{
                     ticks: {
-                        beginAtZero: false, // Saldo bisa negatif
+                        beginAtZero: false,
                         callback: function(value, index, values) {
                             return 'Rp ' + value.toLocaleString('id-ID');
                         }

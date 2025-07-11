@@ -113,12 +113,11 @@ class Pemimpin extends BaseController
         if ($previousTotalPendapatan > 0) {
             $revenueGrowth = (($totalPendapatan - $previousTotalPendapatan) / $previousTotalPendapatan) * 100;
         } elseif ($totalPendapatan > 0) {
-            $revenueGrowth = 100; // Pertumbuhan dianggap 100% jika sebelumnya 0
+            $revenueGrowth = 100;
         }
 
         $cashTrendLabels = [];
         $cashTrendData = [];
-        // PENTING: Ganti angka 1 ini dengan ID akun Kas/Bank utama di databasemu
         $targetAccountId = 15;
 
         $mainCashAccount = $coaModel->find($targetAccountId);
@@ -151,7 +150,6 @@ class Pemimpin extends BaseController
                 $dailyMovements[$row['tanggal_jurnal']] = $row['daily_debit'] - $row['daily_kredit'];
             }
 
-            // Bangun data grafik hari per hari
             for ($i = 30; $i >= 0; $i--) {
                 $date = date('Y-m-d', strtotime("-$i days"));
                 $cashTrendLabels[] = date('d M', strtotime($date));

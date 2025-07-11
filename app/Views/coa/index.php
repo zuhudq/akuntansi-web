@@ -50,7 +50,6 @@ Daftar Akun (Chart of Accounts)
 
 <?= $this->section('page_scripts') ?>
 <script>
-    // Fungsi ini akan dijalankan setelah seluruh halaman siap
     $(function() {
 
         // --- Logika untuk Tombol Hapus ---
@@ -73,15 +72,12 @@ Daftar Akun (Chart of Accounts)
                 }
             });
         });
-
-        // --- PERBAIKAN: Logika untuk Mengaktifkan DataTables ---
-        // Kode ini sekarang diletakkan di sini, BUKAN di dalam fungsi tombol hapus
         $("#data-table").DataTable({
             "responsive": true,
             "lengthChange": false,
             "autoWidth": false,
-            "ordering": true, // Mengaktifkan sorting
-            "info": true, // Menampilkan info halaman
+            "ordering": true,
+            "info": true,
         });
 
     });

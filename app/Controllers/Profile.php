@@ -9,7 +9,6 @@ class Profile extends BaseController
 {
     public function index()
     {
-        // Hanya menampilkan halaman view
         return view('profile/index');
     }
 
@@ -22,11 +21,9 @@ class Profile extends BaseController
         // Aturan validasi
         $rules = [
             'nama_lengkap' => 'required|min_length[3]',
-            // Aturan validasi untuk file avatar (jika di-upload)
             'avatar' => 'max_size[avatar,1024]|is_image[avatar]|mime_in[avatar,image/jpg,image/jpeg,image/png]'
         ];
 
-        // ... (aturan validasi kondisional untuk password biarkan sama) ...
         if ($this->request->getVar('password')) {
             $rules['password'] = 'required|min_length[8]';
             $rules['password_confirm'] = 'required|matches[password]';
@@ -36,30 +33,23 @@ class Profile extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        // Siapkan data untuk diupdate
         $data = ['id' => $userId, 'nama_lengkap' => $this->request->getVar('nama_lengkap')];
-
-        // Cek apakah ada file avatar yang di-upload
         $avatarFile = $this->request->getFile('avatar');
         if ($avatarFile->isValid() && !$avatarFile->hasMoved()) {
             // Hapus avatar lama jika bukan avatar default
             if ($user['avatar'] && $user['avatar'] != 'default_avatar.png') {
                 unlink('uploads/avatars/' . $user['avatar']);
             }
-            // Buat nama random untuk file baru & pindahkan file
             $newName = $avatarFile->getRandomName();
             $avatarFile->move('uploads/avatars/', $newName);
             $data['avatar'] = $newName; // Simpan nama file baru ke database
         }
 
-        // ... (logika untuk update password biarkan sama) ...
         if ($this->request->getVar('password')) {
             $data['password_hash'] = password_hash($this->request->getVar('password'), PASSWORD_BCRYPT);
         }
 
         $userModel->save($data);
-
-        // Update session dengan data baru
         session()->set('nama_lengkap', $data['nama_lengkap']);
         if (isset($data['avatar'])) {
             session()->set('avatar', $data['avatar']);

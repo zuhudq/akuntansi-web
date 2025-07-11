@@ -17,7 +17,6 @@ class Auth extends BaseController
 
     public function processRegister()
     {
-        // 1. Aturan Validasi LENGKAP
         $rules = [
             'nama_lengkap'     => 'required|min_length[3]',
             'email'            => 'required|valid_email|is_unique[users.email]',
@@ -30,7 +29,6 @@ class Auth extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        // 2. Siapkan Data
         $userModel = new UserModel();
         $role = $this->request->getVar('role');
         $email = $this->request->getVar('email');
@@ -43,13 +41,10 @@ class Auth extends BaseController
             'role'          => $role,
         ];
 
-        // 3. Logika Bersyarat (User vs Admin/Supervisor)
         if ($role == 'user') {
             $token = bin2hex(random_bytes(20));
             $data['status'] = 'pending_verification';
             $data['verification_token'] = $token;
-
-            // Kirim email verifikasi menggunakan PHPMailer
             $mail = new PHPMailer(true);
             try {
                 $mail->isSMTP();
@@ -110,7 +105,6 @@ class Auth extends BaseController
             return redirect()->to('/login')->with('error', $errorMessage);
         }
 
-        // Jika semua pengecekan lolos, buat sesi
         $session = session();
         $sessionData = [
             'user_id'      => $user['id'],
@@ -121,8 +115,6 @@ class Auth extends BaseController
         ];
         $session->set($sessionData);
 
-
-        // Cek role setelah sesi dibuat, lalu arahkan ke dashboard yang sesuai
         if ($user['role'] === 'pemimpin') {
             // Jika rolenya pemimpin, arahkan ke dashboard eksekutif
             return redirect()->to('/pemimpin/dashboard');
@@ -152,10 +144,5 @@ class Auth extends BaseController
     {
         session()->destroy();
         return redirect()->to('/login')->with('success', 'Anda telah berhasil logout.');
-    }
-
-    public function testEmail()
-    {
-        // Fungsi tes ini bisa kamu hapus jika sudah tidak dibutuhkan
     }
 }

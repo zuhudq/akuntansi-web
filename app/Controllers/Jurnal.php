@@ -3,8 +3,8 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use App\Models\CoaModel; // PENTING: Panggil CoaModel untuk mengambil daftar akun
-use App\Models\JurnalHeaderModel; // Pastikan baris ini ada
+use App\Models\CoaModel;
+use App\Models\JurnalHeaderModel;
 use App\Models\JurnalDetailModel;
 
 class Jurnal extends BaseController
@@ -12,15 +12,12 @@ class Jurnal extends BaseController
 
     public function index()
     {
-        // Semua kode untuk tahap 1 diletakkan di sini
         $headerModel = new JurnalHeaderModel();
         $data = [
             'journals' => $headerModel->orderBy('tanggal_jurnal', 'DESC')->findAll(),
         ];
         return view('jurnal/index', $data);
     }
-
-    // ... (setelah fungsi index() )
 
     public function detail($id)
     {
@@ -31,7 +28,6 @@ class Jurnal extends BaseController
         $journalHeader = $headerModel->find($id);
 
         // 2. Ambil data detail jurnal, gabungkan (JOIN) dengan tabel Akun (COA)
-        // untuk mendapatkan nama dan kode akun
         $builder = $detailModel->builder();
         $builder->select('jurnal_detail.*, chart_of_accounts.nama_akun, chart_of_accounts.kode_akun');
         $builder->join('chart_of_accounts', 'chart_of_accounts.id_akun = jurnal_detail.id_akun');
@@ -51,8 +47,6 @@ class Jurnal extends BaseController
 
         return view('jurnal/detail', $data);
     }
-
-    // ... (setelah fungsi detail() )
 
     public function edit($id)
     {
@@ -130,29 +124,19 @@ class Jurnal extends BaseController
         }
     }
 
-    // ... (setelah fungsi update() )
-
     public function delete($id)
     {
         $headerModel = new JurnalHeaderModel();
-
-        // Cukup hapus data di header, detailnya akan ikut terhapus otomatis oleh database
-        // berkat 'ON DELETE CASCADE' yang kita atur di migration.
         $headerModel->delete($id);
-
         return redirect()->to('/jurnal')->with('success', 'Jurnal berhasil dihapus!');
     }
 
     public function new()
     {
         $coaModel = new CoaModel();
-
-        // Siapkan data untuk dikirim ke view
         $data = [
-            'accounts' => $coaModel->findAll() // Kirim semua data akun untuk dropdown
+            'accounts' => $coaModel->findAll()
         ];
-
-        // Tampilkan view form
         return view('jurnal/new', $data);
     }
 

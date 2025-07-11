@@ -48,8 +48,6 @@ class Laporan extends BaseController
         return view('laporan/buku_besar', $data);
     }
 
-    // Di dalam file Laporan.php
-    // ... setelah fungsi bukuBesar() ...
     public function labaRugi()
     {
         // Ambil tanggal dari form filter, jika tidak ada, gunakan default bulan ini
@@ -131,6 +129,7 @@ class Laporan extends BaseController
 
         // Logika pengambilan datanya SAMA PERSIS dengan fungsi bukuBesar()
         $selectedAccountId = $this->request->getGet('id_akun');
+        $endDate = $this->request->getGet('end_date') ?? date('Y-m-d');
         if (!$selectedAccountId) {
             return redirect()->to('/laporan/buku-besar')->with('error', 'Silakan pilih akun terlebih dahulu.');
         }
@@ -140,16 +139,18 @@ class Laporan extends BaseController
         $builder->select('jurnal_detail.*, jurnal_header.tanggal_jurnal, jurnal_header.deskripsi');
         $builder->join('jurnal_header', 'jurnal_header.id_jurnal = jurnal_detail.id_jurnal');
         $builder->where('jurnal_detail.id_akun', $selectedAccountId);
+        $builder->where('jurnal_header.tanggal_jurnal <=', $endDate);
         $builder->orderBy('jurnal_header.tanggal_jurnal', 'ASC');
         $reportData = $builder->get()->getResultArray();
 
         $data = [
             'selectedAccount' => $selectedAccount,
             'reportData' => $reportData,
+            'endDate' => $endDate,
         ];
 
         // Inisialisasi Dompdf
-        $dompdf = new Dompdf();
+        $dompdf = new \Dompdf\Dompdf();
         // Load view ke dalam Dompdf
         $dompdf->loadHtml(view('laporan/pdf_buku_besar', $data));
         // Setting ukuran dan orientasi kertas
@@ -157,12 +158,9 @@ class Laporan extends BaseController
         // Render HTML menjadi PDF
         $dompdf->render();
         // Output PDF ke browser
-        // "Attachment" => 0 artinya tampilkan di browser, bukan langsung download
         $dompdf->stream("Laporan_Buku_Besar_" . time() . ".pdf", ["Attachment" => 0]);
     }
 
-    // Di dalam file Laporan.php
-    // ... setelah fungsi labaRugi() ...
     public function neraca()
     {
         $coaModel = new \App\Models\CoaModel();
@@ -224,9 +222,6 @@ class Laporan extends BaseController
             }
         }
 
-        // =============================================================
-        //     INI BAGIAN PERHITUNGAN LABA/RUGI YANG SEBELUMNYA KELIRU
-        // =============================================================
         $totalPendapatan = 0;
         $pendapatanAccounts = $coaModel->where('kategori_akun', 'Pendapatan')->findAll();
         foreach ($pendapatanAccounts as $account) {
@@ -243,8 +238,6 @@ class Laporan extends BaseController
         }
 
         $labaRugiBerjalan = $totalPendapatan - $totalBeban;
-        // =============================================================
-
         $data = [
             'endDate' => $endDate,
             'isFiltered' => $isFiltered,
@@ -253,14 +246,12 @@ class Laporan extends BaseController
             'liabilitasDetails' => $liabilitasDetails,
             'totalLiabilitas' => $totalLiabilitas,
             'ekuitasDetails' => $ekuitasDetails,
-            'totalEkuitas' => $totalEkuitas, // Ini Total Ekuitas SEBELUM ditambah Laba/Rugi
+            'totalEkuitas' => $totalEkuitas,
             'labaRugiBerjalan' => $labaRugiBerjalan,
         ];
 
         return view('laporan/neraca', $data);
     }
-
-    // ... di dalam class Laporan, setelah fungsi neraca() ...
 
     public function cetakLabaRugi()
     {
@@ -306,7 +297,6 @@ class Laporan extends BaseController
                 $totalBeban += $balance;
             }
         }
-        // --- Akhir dari logika perhitungan ---
 
         $data = [
             'startDate' => $startDate,
@@ -330,72 +320,78 @@ class Laporan extends BaseController
         $dompdf->stream("Laporan_Laba_Rugi_" . date('d-m-Y') . ".pdf", ["Attachment" => 0]);
     }
 
-    // ... di dalam class Laporan, setelah fungsi cetakLabaRugi() ...
-
     public function cetakNeraca()
     {
-        // Logika pengambilan dan perhitungan data SAMA PERSIS dengan fungsi neraca()
+        // Logika ini sekarang SAMA PERSIS dengan fungsi neraca() untuk tampilan web
         $coaModel = new \App\Models\CoaModel();
         $detailModel = new \App\Models\JurnalDetailModel();
         $endDate = $this->request->getGet('end_date') ?? date('Y-m-t');
 
-        $calculateBalance = function ($accountId, $endDate) use ($detailModel) {
+        // Fungsi helper untuk menghitung Saldo Akhir akun Neraca
+        $getNeracaBalance = function ($accountId, $saldoAwal, $endDate) use ($detailModel) {
             $builder = $detailModel->builder();
             $builder->select('SUM(debit) as total_debit, SUM(kredit) as total_kredit');
             $builder->join('jurnal_header', 'jurnal_header.id_jurnal = jurnal_detail.id_jurnal');
             $builder->where('jurnal_detail.id_akun', $accountId);
             $builder->where('jurnal_header.tanggal_jurnal <=', $endDate);
-            $result = $builder->get()->getRow();
-            return ($result->total_debit ?? 0) - ($result->total_kredit ?? 0);
+            $movement = $builder->get()->getRow();
+            $netMovement = ($movement->total_debit ?? 0) - ($movement->total_kredit ?? 0);
+            return $saldoAwal + $netMovement;
         };
 
-        $asetAccounts = $coaModel->where('kategori_akun', 'Aset')->orderBy('kode_akun', 'ASC')->findAll();
+        // Perhitungan Aset
         $asetDetails = [];
         $totalAset = 0;
+        $asetAccounts = $coaModel->where('kategori_akun', 'Aset')->orderBy('kode_akun', 'ASC')->findAll();
         foreach ($asetAccounts as $account) {
-            $balance = $calculateBalance($account['id_akun'], $endDate);
-            if ($balance != 0) {
+            $balance = $getNeracaBalance($account['id_akun'], $account['saldo_awal'], $endDate);
+            if ($balance != 0 || $account['saldo_awal'] != 0) {
                 $asetDetails[] = ['nama_akun' => $account['nama_akun'], 'balance' => $balance];
                 $totalAset += $balance;
             }
         }
 
-        $liabilitasAccounts = $coaModel->where('kategori_akun', 'Liabilitas')->orderBy('kode_akun', 'ASC')->findAll();
+        // Perhitungan Liabilitas
         $liabilitasDetails = [];
         $totalLiabilitas = 0;
+        $liabilitasAccounts = $coaModel->where('kategori_akun', 'Liabilitas')->orderBy('kode_akun', 'ASC')->findAll();
         foreach ($liabilitasAccounts as $account) {
-            $balance = $calculateBalance($account['id_akun'], $endDate) * -1;
-            if ($balance != 0) {
+            $balance = ($getNeracaBalance($account['id_akun'], $account['saldo_awal'], $endDate)) * -1; // dikali -1 karena saldo normal kredit
+            if ($balance != 0 || $account['saldo_awal'] != 0) {
                 $liabilitasDetails[] = ['nama_akun' => $account['nama_akun'], 'balance' => $balance];
                 $totalLiabilitas += $balance;
             }
         }
 
-        $ekuitasAccounts = $coaModel->where('kategori_akun', 'Ekuitas')->orderBy('kode_akun', 'ASC')->findAll();
+        // Perhitungan Ekuitas
         $ekuitasDetails = [];
         $totalEkuitas = 0;
+        $ekuitasAccounts = $coaModel->where('kategori_akun', 'Ekuitas')->orderBy('kode_akun', 'ASC')->findAll();
         foreach ($ekuitasAccounts as $account) {
-            $balance = $calculateBalance($account['id_akun'], $endDate) * -1;
-            if ($balance != 0) {
+            $balance = ($getNeracaBalance($account['id_akun'], $account['saldo_awal'], $endDate)) * -1; // dikali -1 karena saldo normal kredit
+            if ($balance != 0 || $account['saldo_awal'] != 0) {
                 $ekuitasDetails[] = ['nama_akun' => $account['nama_akun'], 'balance' => $balance];
                 $totalEkuitas += $balance;
             }
         }
 
-        $pendapatanBalance = 0;
+        // Perhitungan Laba Rugi Periode Berjalan (untuk ditambahkan ke Ekuitas)
+        $startOfYear = date('Y-01-01', strtotime($endDate));
+        $getLabaRugiBalance = function ($accountId, $startDate, $endDate) use ($detailModel) { /* ... isi sama seperti di fungsi neraca() ... */
+        };
+        $totalPendapatan = 0;
         $pendapatanAccounts = $coaModel->where('kategori_akun', 'Pendapatan')->findAll();
         foreach ($pendapatanAccounts as $account) {
-            $pendapatanBalance += $calculateBalance($account['id_akun'], $endDate) * -1;
+            $totalPendapatan += $getLabaRugiBalance($account['id_akun'], $startOfYear, $endDate) * -1;
         }
-
-        $bebanBalance = 0;
+        $totalBeban = 0;
         $bebanAccounts = $coaModel->where('kategori_akun', 'Beban')->findAll();
         foreach ($bebanAccounts as $account) {
-            $bebanBalance += $calculateBalance($account['id_akun'], $endDate);
+            $totalBeban += $getLabaRugiBalance($account['id_akun'], $startOfYear, $endDate);
         }
-        $labaRugiBerjalan = $pendapatanBalance - $bebanBalance;
-        $totalEkuitas += $labaRugiBerjalan;
+        $labaRugiBerjalan = $totalPendapatan - $totalBeban;
 
+        // Menyiapkan data untuk dikirim ke view PDF
         $data = [
             'endDate' => $endDate,
             'asetDetails' => $asetDetails,
@@ -404,10 +400,10 @@ class Laporan extends BaseController
             'totalLiabilitas' => $totalLiabilitas,
             'ekuitasDetails' => $ekuitasDetails,
             'labaRugiBerjalan' => $labaRugiBerjalan,
-            'totalEkuitas' => $totalEkuitas,
+            'totalEkuitas' => $totalEkuitas, // Total ekuitas sebelum ditambah laba/rugi berjalan
         ];
 
-        // Inisialisasi Dompdf
+        // Proses membuat PDF (tidak berubah)
         $dompdf = new \Dompdf\Dompdf();
         $dompdf->loadHtml(view('laporan/pdf_neraca', $data));
         $dompdf->setPaper('A4', 'portrait');
@@ -415,13 +411,8 @@ class Laporan extends BaseController
         $dompdf->stream("Laporan_Neraca_" . date('d-m-Y') . ".pdf", ["Attachment" => 0]);
     }
 
-    // Di dalam class Laporan, setelah fungsi cetakNeraca()
-
     public function exportLabaRugiExcel()
     {
-        // =======================================================
-        //     BAGIAN YANG SEBELUMNYA HILANG, SEKARANG DILENGKAPI
-        // =======================================================
         $startDate = $this->request->getGet('start_date') ?? date('Y-m-01');
         $endDate = $this->request->getGet('end_date') ?? date('Y-m-t');
         $coaModel = new \App\Models\CoaModel();
@@ -461,10 +452,6 @@ class Laporan extends BaseController
             }
         }
         $labaRugiPeriode = $totalPendapatan - $totalBeban;
-
-        // =======================================================
-        //     LOGIKA MENULIS KE EXCEL (TIDAK BERUBAH)
-        // =======================================================
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
@@ -529,5 +516,60 @@ class Laporan extends BaseController
         header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
         $writer->save('php://output');
         exit();
+    }
+
+    private function _getLabaRugiData($startDate, $endDate)
+    {
+        if (empty($startDate) || empty($endDate)) {
+            $startDate = date('Y-m-01');
+            $endDate = date('Y-m-t');
+        }
+
+        $coaModel = new CoaModel();
+        $detailModel = new JurnalDetailModel();
+
+        $getLabaRugiBalance = function ($accountId, $startDate, $endDate) use ($detailModel) {
+            $builder = $detailModel->builder();
+            $builder->select('SUM(debit) as total_debit, SUM(kredit) as total_kredit');
+            $builder->join('jurnal_header', 'jurnal_header.id_jurnal = jurnal_detail.id_jurnal');
+            $builder->where('jurnal_detail.id_akun', $accountId);
+            $builder->where('jurnal_header.tanggal_jurnal >=', $startDate);
+            $builder->where('jurnal_header.tanggal_jurnal <=', $endDate);
+            $result = $builder->get()->getRow();
+            return ($result->total_debit ?? 0) - ($result->total_kredit ?? 0);
+        };
+
+        $pendapatanAccounts = $coaModel->where('kategori_akun', 'Pendapatan')->findAll();
+        $totalPendapatan = 0;
+        $pendapatanDetails = [];
+        foreach ($pendapatanAccounts as $account) {
+            $balance = $getLabaRugiBalance($account['id_akun'], $startDate, $endDate) * -1;
+            if ($balance != 0) {
+                $pendapatanDetails[] = ['nama_akun' => $account['nama_akun'], 'balance' => $balance];
+                $totalPendapatan += $balance;
+            }
+        }
+
+        $bebanAccounts = $coaModel->where('kategori_akun', 'Beban')->findAll();
+        $totalBeban = 0;
+        $bebanDetails = [];
+        foreach ($bebanAccounts as $account) {
+            $balance = $getLabaRugiBalance($account['id_akun'], $startDate, $endDate);
+            if ($balance != 0) {
+                $bebanDetails[] = ['nama_akun' => $account['nama_akun'], 'balance' => $balance];
+                $totalBeban += $balance;
+            }
+        }
+
+        $labaRugi = $totalPendapatan - $totalBeban;
+        return [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'pendapatanDetails' => $pendapatanDetails,
+            'totalPendapatan' => $totalPendapatan,
+            'bebanDetails' => $bebanDetails,
+            'totalBeban' => $totalBeban,
+            'labaRugi' => $labaRugi,
+        ];
     }
 }
